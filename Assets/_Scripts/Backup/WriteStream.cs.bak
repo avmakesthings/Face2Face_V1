@@ -1,0 +1,141 @@
+﻿//
+
+
+#define DEBUG_Webcam
+//#define DEBUG_PrintStreamBytes
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
+using Utils;
+
+
+[RequireComponent(typeof(AWSClient))]
+public class WriteStream : MonoBehaviour
+{
+#if DEBUG_Webcam 
+
+    private bool camAvailable;
+    private bool isInitialized = false;
+    private WebCamTexture webCam;
+    private Texture defaultBackground;
+    private int frames = 0;
+    Color32[] data;
+
+    public RawImage background;
+    public AspectRatioFitter fit;
+#endif 
+
+    public int captureRate; 
+
+    //TODO : add field for AR camera here ... 
+
+    //AWS fields
+    static private AWSClient _C;
+
+    [System.Serializable]
+    struct FramePackage
+    {
+        public System.DateTime ApproximateCaptureTime;
+        public int FrameCount;
+        byte[] ImageBytes; 
+
+        public FramePackage(System.DateTime time, int count, byte[] data)
+        {
+            this.ApproximateCaptureTime = time;
+            this.FrameCount = count;
+            this.ImageBytes = data; 
+        }
+    }
+
+    // Use this for initialization
+    void Start()
+    {
+        _C = GetComponent<AWSClient>();
+
+#if DEBUG_Webcam        
+        defaultBackground = background.texture;
+        WebCamDevice[] devices = WebCamTexture.devices;
+
+        if (devices.Length == 0){
+            Debug.Log("No camera detected");
+            return;
+        }
+
+        for (int i = 0; i < devices.Length; i++){
+            if(devices[i].isFrontFacing){
+                webCam = new WebCamTexture(devices[i].name, Screen.width/100, Screen.height/100);
+            } 
+        }
+
+        if(webCam == null){
+            Debug.Log("Unable to find webcam");
+            return;
+        }
+
+        webCam.Play();
+        background.texture = webCam;
+        camAvailable = true;
+#endif    
+    }
+
+
+    void Update()
+    {
+#if DEBUG_Webcam
+        frames++;
+        if (!camAvailable)
+        {
+            return;
+        }
+
+        if (!isInitialized && webCam.didUpdateThisFrame) {
+            data = new Color32[webCam.width * webCam.height];
+            print(webCam.width + "height" + webCam.height);
+            isInitialized = true;
+        }
+        else if (isInitialized && webCam.didUpdateThisFrame && frames % captureRate == 0){
+
+            webCam.GetPixels32(data);
+            byte[] b = Color32ArrayToByteArray(data);
+#endif
+#if DEBUG_PrintStreamBytes 
+            File.WriteAllBytes(Application.dataPath + "/StreamingAssets/testbytefile.txt", b );
+#endif
+#if DEBUG_Webcam
+            FramePackage dataToStream = new FramePackage(System.DateTime.UtcNow,frames,b);
+            string encodedDataToStream = System.Convert.ToBase64String(ObjectSerializationExtension.SerializeToByteArray(dataToStream));
+            print(encodedDataToStream.Length);
+            //_C.PutRecord(encodedDataToStream, "FrameStream", (response) =>{});
+        }   
+
+#endif
+    }
+
+    // A helper function to convert a color32 array to a byte array 
+    private static byte[] Color32ArrayToByteArray(Color32[] colors)
+    {
+        byte[] bytes = new byte[colors.Length * 4];
+        for (int i = 0; i < bytes.Length / 4; i += 4)
+        {
+            bytes[i] = colors[i].r;
+            bytes[i + 1] = colors[i].g;
+            bytes[i + 2] = colors[i].b;
+            bytes[i + 3] = colors[i].a;
+        }
+        return bytes;
+    }
+
+
+    // A helper function to resize a colour32 array 
+    private static Color32[] ResizeColor32Array(Color32[] colors){
+
+
+
+        return colors;
+    }
+
+
+}
