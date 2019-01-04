@@ -15,8 +15,6 @@ public class FaceVisualizer : MonoBehaviour {
 	private Mesh faceDebugMesh;
 	private UnityARSessionNativeInterface m_session;
 
-    private Bounds meshbounds;
-    private Bounds rendBounds;
 	private Vector3 basePos;
     private Vector2 screenBasePos;
 	private GameObject bBox;
@@ -126,8 +124,8 @@ public class FaceVisualizer : MonoBehaviour {
 		meshFilter.mesh = faceDebugMesh;
 		drawBBox();  // this is for the 3d bounding box
 		updateDebugFaceMesh(anchorData);
-        meshbounds = faceDebugMesh.bounds;
-        rendBounds = this.GetComponent<MeshRenderer>().bounds;
+
+
 	}
 
 
