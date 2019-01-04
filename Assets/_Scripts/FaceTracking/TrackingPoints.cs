@@ -20,6 +20,7 @@ public class TrackingPoints : MonoBehaviour {
         filter = this.GetComponent<MeshFilter>();
 
         StartCoroutine(CreateParticles());
+
 	}
 
 
@@ -32,7 +33,7 @@ public class TrackingPoints : MonoBehaviour {
                 Debug.Log("tracking points face detected");
                 faceDetected = true;
                 vertices = filter.sharedMesh.vertices;
-                vertexCount = filter.sharedMesh.vertices.Length;
+                vertexCount = (filter.sharedMesh.vertices.Length)/2; //half the number of particles drawn
                 particlesArray = new ParticleSystem.Particle[vertexCount];
                 particleSystem.maxParticles = vertexCount;
                 particleSystem.Emit(vertexCount);
@@ -46,11 +47,10 @@ public class TrackingPoints : MonoBehaviour {
             {
                 for (int i = 0; i < vertexCount; i++)
                 {
-                    particlesArray[i].position = vertices[i];
+                    particlesArray[i].position = vertices[i*2];
                 }
                 particleSystem.SetParticles(particlesArray, particlesArray.Length);
             }
-
             yield return new WaitForSeconds(0.125f);
         }
 
