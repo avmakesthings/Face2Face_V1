@@ -1,13 +1,10 @@
 ﻿using System.Collections;
-
-
 using System.Collections.Generic;
-
-
 using UnityEngine;
 
 
-
+[RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(MeshFilter))]
 public class LineDeltas : MonoBehaviour
 
 {
@@ -21,21 +18,19 @@ public class LineDeltas : MonoBehaviour
 
 
     void Start()
-
     {
         StartCoroutine(DrawDeltas());
     }
 
 
     IEnumerator DrawDeltas()
-
     {
         while (true)
-
         {
             filter = GetComponent<MeshFilter>();
             lineRenderer = GetComponent<LineRenderer>();
-            if (filter.sharedMesh != null && lineRenderer)
+            if ((
+                lineRenderer != null) && (filter.sharedMesh != null && lineRenderer))
 
             {
                 vertices = filter.sharedMesh.vertices;
@@ -46,9 +41,7 @@ public class LineDeltas : MonoBehaviour
                     vertexCount = filter.sharedMesh.vertices.Length;
                     lastVertices = new Vector3[vertexCount];
                     changed = new bool[vertexCount];
-
                 }
-
 
                 Vector3 v;
                 Vector3 nextV;
@@ -56,49 +49,36 @@ public class LineDeltas : MonoBehaviour
                 for (int i = 0; i < vertexCount; ++i)
 
                 {
-
                     v = lastVertices[i];
                     nextV = vertices[i];
                     if (v != nextV && Vector3.Distance(v, nextV) > cutoff)
-
                     {
-
                         changed[i] = true;
                         changedCount++;
-
-                    }
-
-                    else
-
-                    {
+                    }else{
                         changed[i] = false;
                     }
-
                 }
 
-
-                lineRenderer.SetVertexCount(changedCount);
+                lineRenderer.positionCount = changedCount;
+                //lineRenderer.SetVertexCount(changedCount);
 
                 int j = 0;
-                for (int i = 0; i < vertexCount; i++)
-
-                {
-
+                for (int i = 0; i < vertexCount; i++){
                     if (changed[i])
                     {
                         lineRenderer.SetPosition(j, vertices[i]);
                         j++;
                     }
-
                 }
 
                 lastVertices = vertices;
 
             }
             yield return new WaitForSeconds(0.125f);
-
         }
 
     }
+
 
 }

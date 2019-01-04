@@ -27,7 +27,7 @@ public class FaceVisualizer : MonoBehaviour {
     [SerializeField]
     public UnityEvent faceAdded;
     public UnityEvent faceRemoved;
-    public Text nameText;
+
 
 	// Use this for initialization
 	void Start () {
