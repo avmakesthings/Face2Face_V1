@@ -37,11 +37,14 @@ public class WriteStream : MonoBehaviour
 
     public int captureRate;
     public bool sendToAWS;
-    private int frames = 0;
     private RenderTexture arCamTexture;
     Texture2D tex;
+    Texture2D croppedTex;
 
-
+    private byte[] frameBytes;
+    FramePackage dataToStream;
+    string JSONdataToStream;
+    bool isRunning = false;
     WaitForEndOfFrame frameEnd = new WaitForEndOfFrame();
 
     static private AWSClient _C;
@@ -64,7 +67,6 @@ public class WriteStream : MonoBehaviour
         public string serialize(){
             return JsonConvert.SerializeObject(this);
         }
-
     }
 
 
@@ -76,9 +78,8 @@ public class WriteStream : MonoBehaviour
         arCamTexture = new RenderTexture(arCam.pixelWidth, arCam.pixelHeight, 16, RenderTextureFormat.ARGB32);
         arCamTexture.Create();
         arCam.targetTexture = arCamTexture;
-
         tex = new Texture2D(arCamTexture.width, arCamTexture.height);
-
+        arCamTexture.Release();
 
     #region Webcam
 #if DEBUG_Webcam
@@ -112,7 +113,6 @@ public class WriteStream : MonoBehaviour
 
     void Update()
     {
-        frames++;
 
         #region webcam
 #if DEBUG_Webcam
@@ -143,7 +143,10 @@ public class WriteStream : MonoBehaviour
 #endif
         #endregion
 
-        if(frames % captureRate == 0 && sendToAWS ){
+        if((Time.frameCount % captureRate == 0) && sendToAWS){
+            if(isRunning){
+                StopCoroutine(ExportFrame());  
+            }
             StartCoroutine(ExportFrame());
         }
     }
@@ -151,25 +154,27 @@ public class WriteStream : MonoBehaviour
 
     public IEnumerator ExportFrame()
     {
+        isRunning = true;
         yield return frameEnd;
         tex.Resize(arCamTexture.width, arCamTexture.height);
         tex.ReadPixels(new Rect(0, 0, arCamTexture.width, arCamTexture.height), 0, 0);
         tex.Apply();
 
         TextureScale.Bilinear(tex, tex.width / 2, tex.height / 2);
-        Texture2D croppedTex = TextureTools.ResampleAndCrop(tex,tex.width,tex.height/2+100);
-        byte[] frameBytes = croppedTex.EncodeToJPG();
+        croppedTex = TextureTools.ResampleAndCrop(tex,tex.width,tex.height/2+100);
+        frameBytes = croppedTex.EncodeToJPG();
 
         //Debug to write texture into PNG
         //File.WriteAllBytes(Application.dataPath + System.String.Format( "/../SavedScreen{0}.jpg", frames), frameBytes);
 
-        FramePackage dataToStream = new FramePackage(System.DateTime.UtcNow, frames, frameBytes);
-        string JSONdataToStream = dataToStream.serialize();
+        //Debug.Log("sending data to stream");
+        dataToStream = new FramePackage(System.DateTime.UtcNow, Time.frameCount, frameBytes);
 
+        JSONdataToStream = dataToStream.serialize();
 
         Debug.Log("Sending image to Kinesis");
-        _C.PutRecord(JSONdataToStream, "FrameStream", (response) => { }); 
-
+        _C.PutRecord(JSONdataToStream, "FrameStream", (response) => { });
+        isRunning = false;
     }
 
     public void activate(){
@@ -178,6 +183,7 @@ public class WriteStream : MonoBehaviour
 
     public void deactive(){
         sendToAWS = false;
+        StopCoroutine(ExportFrame());
     }
 
 }

@@ -30,7 +30,7 @@ public class TrackingPoints : MonoBehaviour {
 
             if (filter.sharedMesh != null)
             {
-                Debug.Log("tracking points face detected");
+                //Debug.Log("tracking points face detected");
                 faceDetected = true;
                 vertices = filter.sharedMesh.vertices;
                 vertexCount = (filter.sharedMesh.vertices.Length)/2; //half the number of particles drawn
