@@ -32,7 +32,6 @@ public class FaceVisualizer : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-
 		m_session = UnityARSessionNativeInterface.GetARSessionNativeInterface();
 
 		Application.targetFrameRate = 60;
