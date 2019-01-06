@@ -65,7 +65,7 @@ public class Read_PrintStream : MonoBehaviour {
 							printConfidence(record.rekog_face_details[0].Mustache.Confidence, record.rekog_face_details[0].Mustache.Value,mustacheText);
 							printConfidence(record.rekog_face_details[0].Beard.Confidence,record.rekog_face_details[0].Beard.Value ,beardText);
 							printConfidence(record.rekog_face_details[0].Eyeglasses.Confidence, record.rekog_face_details[0].Eyeglasses.Value, glassesText);
-
+                            Debug.Log("glasses value" + record.rekog_face_details[0].Eyeglasses.Value);
 						}
 					} catch(Exception e){
 						HandleError(e);
