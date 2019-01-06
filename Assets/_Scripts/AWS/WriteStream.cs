@@ -26,7 +26,7 @@ public class WriteStream : MonoBehaviour
     Rect screenRect;
 
     private byte[] frameBytes;
-    FramePackage dataToStream;
+    private FramePackage dataToStream = new FramePackage();
     string JSONdataToStream;
 
     bool isRunning = false;
@@ -62,7 +62,6 @@ public class WriteStream : MonoBehaviour
     {
         _C = GetComponent<AWSClient>();
         arCam = this.GetComponent<Camera>();
-        frameBytes = new byte[5];
         tex = new Texture2D(arCam.pixelWidth, arCam.pixelHeight);
         screenRect = new Rect(0, 0, arCam.pixelWidth, arCam.pixelHeight);
         exportInterval = new WaitForSeconds(2.0f);
@@ -83,15 +82,14 @@ public class WriteStream : MonoBehaviour
 
                 TextureScale.Bilinear(tex, tex.width / 2, tex.height / 2);
                 croppedTex = TextureTools.ResampleAndCrop(tex, tex.width, tex.height / 2 + 100);
-                //frameBytes = croppedTex.EncodeToJPG();
+                frameBytes = croppedTex.EncodeToJPG();
 
-                dataToStream = new FramePackage(System.DateTime.UtcNow, Time.frameCount, frameBytes);
+                dataToStream.ApproximateCaptureTime = System.DateTime.UtcNow;
+                dataToStream.FrameCount = Time.frameCount;
+                dataToStream.ImageBytes = frameBytes;
 
                 JSONdataToStream = dataToStream.serialize();
-
-                //Debug.Log("Sending image to Kinesis >>" + Time.frameCount );
                 _C.PutRecord(JSONdataToStream, "FrameStream", (response) => { });
-
 
                 frameBytes = null;
                 JSONdataToStream = null;
@@ -100,7 +98,6 @@ public class WriteStream : MonoBehaviour
             }
             yield return exportInterval;
         }
-
     }
 
 

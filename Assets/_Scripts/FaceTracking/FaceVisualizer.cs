@@ -65,7 +65,7 @@ public class FaceVisualizer : MonoBehaviour {
 
             if (!FaceActive)
             {
-                Debug.Log("updated - anchor data is tracked and not faceActive");
+                //Debug.Log("updated - anchor data is tracked and not faceActive");
                 FaceActive = true;
                 faceAdded.Invoke();
             }
@@ -77,7 +77,7 @@ public class FaceVisualizer : MonoBehaviour {
         }else{
             if (FaceActive)
             {
-                Debug.Log("updated - anchor data not tracked and faceActive");
+                //Debug.Log("updated - anchor data not tracked and faceActive");
                 FaceActive = false;
                 faceRemoved.Invoke();
             } 
