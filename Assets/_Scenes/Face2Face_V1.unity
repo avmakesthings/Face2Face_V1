@@ -2859,13 +2859,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshFilter: {fileID: 1056446897}
   faceBoxMaterial: {fileID: 2100000, guid: b12848ecf996c4a25a30732f4a5fbf60, type: 2}
-  crosshair: {fileID: 2800000, guid: c2fa8b328a92a4299b37b86e22e96142, type: 3}
-  position:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
   faceAdded:
     m_PersistentCalls:
       m_Calls:
@@ -2879,10 +2872,10 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
-        m_CallState: 2
+        m_CallState: 1
       - m_Target: {fileID: 2116035355}
-        m_MethodName: resetDataFields
-        m_Mode: 5
+        m_MethodName: activate
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -2890,15 +2883,15 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
-        m_CallState: 2
+        m_CallState: 1
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   faceRemoved:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2116035355}
-        m_MethodName: resetDataFields
-        m_Mode: 5
+      - m_Target: {fileID: 2116035356}
+        m_MethodName: deactivate
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -2907,15 +2900,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 1
-      - m_Target: {fileID: 2116035356}
-        m_MethodName: deactive
+      - m_Target: {fileID: 2116035355}
+        m_MethodName: deactivate
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: "\t\t"
           m_BoolArgument: 0
         m_CallState: 2
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
@@ -9259,46 +9252,6 @@ CanvasRenderer:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1695264218}
   m_CullTransparentMesh: 0
---- !u!1 &1705379796
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1705379798}
-  - component: {fileID: 1705379797}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1705379797
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1705379796}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 077f6126897d044e789ea1aa03a8ba20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &1705379798
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1705379796}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 605.0353, y: 1062.1355, z: 77.40702}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 6
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1740911500
 GameObject:
   m_ObjectHideFlags: 0
@@ -10528,14 +10481,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04e8979cee6914b8d809c36302756c26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AWSClientObject: {fileID: 2116035353}
   ageText: {fileID: 58112402}
   genderText: {fileID: 1214988122}
   emotionText: {fileID: 1347752395}
   mustacheText: {fileID: 458675058}
   glassesText: {fileID: 875764080}
   beardText: {fileID: 2014498211}
-  infoLayout: {fileID: 413841536}
 --- !u!114 &2116035356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10547,7 +10498,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 164905cac7c194f719f998920161e65c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  captureRate: 120
+  frameExportInterval: 2
   sendToAWS: 0
 --- !u!114 &2116035357
 MonoBehaviour:

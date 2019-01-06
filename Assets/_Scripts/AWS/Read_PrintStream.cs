@@ -5,26 +5,28 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Text;
 
+[RequireComponent(typeof(AWSClient))]
 public class Read_PrintStream : MonoBehaviour {
-    
-	public GameObject AWSClientObject;
+
+    private AWSClient awsClient;
+    private string streamName;
+    private Coroutine co;
+    bool stopPrinting;
+
     public Text ageText;
     public Text genderText;
 	public Text emotionText;
     public Text mustacheText;
     public Text glassesText;
     public Text beardText;
-
-
-    public RectTransform infoLayout;
     string emotionStr;
 
 
-
 	// Use this for initialization
-	void  Start() {
-		StartCoroutine("TestClient");
-
+	void Start() {
+        resetDataFields("");
+        awsClient = this.GetComponent<AWSClient>();
+        streamName = "AmazonRekognitionStreamOut";
 	}
 
 	void HandleError(Exception e){
@@ -33,25 +35,23 @@ public class Read_PrintStream : MonoBehaviour {
 
 
 
-	IEnumerator TestClient(){
-		yield return null;// new WaitForSeconds(1f);
-		try{
-			// Test POC AWS client
-			AWSClient awsClient = AWSClientObject.GetComponent<AWSClient>();
-			string streamName = "AmazonRekognitionStreamOut";
+    IEnumerator ReadKinesisStream(){
+		yield return null;
 
-
-			awsClient.ReadStream(streamName, (response)=>{
+        try{
+			
+            awsClient.ReadStream(streamName, (response)=>{
 				List<Amazon.Kinesis.Model.Record> records = response.Records;
 				foreach(Amazon.Kinesis.Model.Record awsRecord in records){
-					
+                    if (stopPrinting)
+                    {
+                        return;
+                    }
 					try{
-
-                        resetDataFields("");
 						string recordString = Encoding.ASCII.GetString(awsRecord.Data.ToArray());
 						Rekog.Record record = Rekog.Record.Deserialize(recordString);
 
-						if(record.rekog_face_details.Count > 0 ){
+						if(record.rekog_face_details.Count > 0){
 							printAge(record.rekog_face_details[0].AgeRange.Low, record.rekog_face_details[0].AgeRange.High);
 							printGender(record.rekog_face_details[0].Gender.Value, record.rekog_face_details[0].Gender.Confidence);
 							
@@ -67,29 +67,29 @@ public class Read_PrintStream : MonoBehaviour {
 							printConfidence(record.rekog_face_details[0].Eyeglasses.Confidence, record.rekog_face_details[0].Eyeglasses.Value, glassesText);
 
 						}
-
-
 					} catch(Exception e){
 						HandleError(e);
 					}
-
 				}
 			});
-		} catch(Exception e){
+		}catch(Exception e){
 			HandleError(e);
-		}
-		
+        }
+
 	}
+
 
 	void printAge(float lowAge, float highAge ){
 		string s = String.Format("{0} - {1}", (int)lowAge, (int)highAge);
 		ageText.text = s;
 	}
 
+
 	void printGender(string myGender, float confidence){
 		string s = String.Format("{0}% {1}", (int)confidence, myGender);
 		genderText.text = s;
 	}
+
 
 	void printConfidence(float confidence, bool value, Text text){
 		string s;
@@ -101,12 +101,11 @@ public class Read_PrintStream : MonoBehaviour {
 		text.text = s;
 	}
 
+
 	string printEmotion(string myEmotion, float confidence){
 		string s = String.Format("{0}% {1} \n", confidence.ToString("n2"), myEmotion);
 		return s;
 	}
-
-
 
     public void resetDataFields(string resetString){
         
@@ -116,6 +115,22 @@ public class Read_PrintStream : MonoBehaviour {
         beardText.text = resetString;
         ageText.text= resetString;
         genderText.text = resetString;
+    }
+
+    public void activate()
+    {
+        resetDataFields("");
+        stopPrinting = false;
+        co = StartCoroutine(ReadKinesisStream());
+    }
+
+
+    public void deactivate()
+    {
+        stopPrinting = true;
+        StopCoroutine(co);
+        resetDataFields("");
+
     }
 
 }

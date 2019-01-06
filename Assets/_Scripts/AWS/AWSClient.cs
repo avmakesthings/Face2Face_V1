@@ -54,7 +54,7 @@ public struct ReadStreamResponse{
 public delegate void HandleReadStreamResponse(ReadStreamResponse response);
 
 
-
+[RequireComponent(typeof(AWSConfig))]
 public class AWSClient : MonoBehaviour
 {
 
