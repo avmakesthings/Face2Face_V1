@@ -1,5 +1,4 @@
 ﻿
-//#define DEBUG_Webcam
 #define AR_camera
 
 using System.Collections;
@@ -16,33 +15,24 @@ using Utils;
 
 
 [RequireComponent(typeof(AWSClient))]
-[RequireComponent(typeof(AWSConfig))]
 public class WriteStream : MonoBehaviour
 {
-
-    #region Webcam_fields
-#if DEBUG_Webcam
-    private bool camAvailable;
-    private bool isInitialized = false;
-    private WebCamTexture webCam;
-    private Texture defaultBackground;
-
-    Color32[] data;
-
-    public RawImage background;
-    public AspectRatioFitter fit;
-#endif
-    #endregion
-
-
-    public int captureRate;
+    
+    public float frameExportInterval;
     public bool sendToAWS;
-    private int frames = 0;
-    private RenderTexture arCamTexture;
     Texture2D tex;
+    Texture2D croppedTex;
+    Camera arCam;
+    Rect screenRect;
 
+    private byte[] frameBytes;
+    private FramePackage dataToStream = new FramePackage();
+    string JSONdataToStream;
 
+    bool isRunning = false;
     WaitForEndOfFrame frameEnd = new WaitForEndOfFrame();
+    WaitForSeconds exportInterval;
+    private Coroutine co;
 
     static private AWSClient _C;
 
@@ -64,7 +54,6 @@ public class WriteStream : MonoBehaviour
         public string serialize(){
             return JsonConvert.SerializeObject(this);
         }
-
     }
 
 
@@ -72,112 +61,56 @@ public class WriteStream : MonoBehaviour
     void Start()
     {
         _C = GetComponent<AWSClient>();
-        Camera arCam = this.GetComponent<Camera>();
-        arCamTexture = new RenderTexture(arCam.pixelWidth, arCam.pixelHeight, 16, RenderTextureFormat.ARGB32);
-        arCamTexture.Create();
-        arCam.targetTexture = arCamTexture;
-
-        tex = new Texture2D(arCamTexture.width, arCamTexture.height);
-
-
-    #region Webcam
-#if DEBUG_Webcam
-        defaultBackground = background.texture;
-        WebCamDevice[] devices = WebCamTexture.devices;
-
-        if (devices.Length == 0){
-            Debug.Log("No camera detected");
-            return;
-        }
-
-        for (int i = 0; i < devices.Length; i++){
-            if(devices[i].isFrontFacing){
-                webCam = new WebCamTexture(devices[i].name, Screen.width/100, Screen.height/100);
-            } 
-        }
-
-        if(webCam == null){
-            Debug.Log("Unable to find webcam");
-            return;
-        }
-
-        webCam.Play();
-        background.texture = webCam;
-        camAvailable = true;
-#endif
-    #endregion
-    
-    }
-
-
-    void Update()
-    {
-        frames++;
-
-        #region webcam
-#if DEBUG_Webcam
-
-        Texture2D t = new Texture2D(1280, 720);
-
-        if (!camAvailable)
-        {
-            return;
-        }
-
-        if (!isInitialized && webCam.didUpdateThisFrame) {
-
-            data = new Color32[webCam.width * webCam.height];
-            print(webCam.width + "height" + webCam.height);
-            isInitialized = true;
-        }
-        else if (isInitialized && webCam.didUpdateThisFrame && frames % captureRate == 0){
-            
-            webCam.GetPixels32(data);
-            t.SetPixels32(data);
-            t.Resize(128, 72);
-            t.Apply();
-            byte[] b = Color32ArrayToByteArray(t.GetPixels32());
-            
-            //File.WriteAllBytes(Application.dataPath + "/StreamingAssets/testbytefile.txt", b );
-
-#endif
-        #endregion
-
-        if(frames % captureRate == 0 && sendToAWS ){
-            StartCoroutine(ExportFrame());
-        }
+        arCam = this.GetComponent<Camera>();
+        tex = new Texture2D(arCam.pixelWidth, arCam.pixelHeight);
+        screenRect = new Rect(0, 0, arCam.pixelWidth, arCam.pixelHeight);
+        exportInterval = new WaitForSeconds(2.0f);
     }
 
 
     public IEnumerator ExportFrame()
     {
-        yield return frameEnd;
-        tex.Resize(arCamTexture.width, arCamTexture.height);
-        tex.ReadPixels(new Rect(0, 0, arCamTexture.width, arCamTexture.height), 0, 0);
-        tex.Apply();
+        while(true){
+                
+            if(sendToAWS && !isRunning){
+                isRunning = true;
+                yield return frameEnd;
 
-        TextureScale.Bilinear(tex, tex.width / 2, tex.height / 2);
-        Texture2D croppedTex = TextureTools.ResampleAndCrop(tex,tex.width,tex.height/2+100);
-        byte[] frameBytes = croppedTex.EncodeToJPG();
+                tex.Resize(arCam.pixelWidth, arCam.pixelHeight);
+                tex.ReadPixels(screenRect, 0, 0);
+                tex.Apply();
 
-        //Debug to write texture into PNG
-        //File.WriteAllBytes(Application.dataPath + System.String.Format( "/../SavedScreen{0}.jpg", frames), frameBytes);
+                TextureScale.Bilinear(tex, tex.width / 2, tex.height / 2);
+                croppedTex = TextureTools.ResampleAndCrop(tex, tex.width, tex.height / 2 + 100);
+                frameBytes = croppedTex.EncodeToJPG();
 
-        FramePackage dataToStream = new FramePackage(System.DateTime.UtcNow, frames, frameBytes);
-        string JSONdataToStream = dataToStream.serialize();
+                dataToStream.ApproximateCaptureTime = System.DateTime.UtcNow;
+                dataToStream.FrameCount = Time.frameCount;
+                dataToStream.ImageBytes = frameBytes;
 
+                JSONdataToStream = dataToStream.serialize();
+                _C.PutRecord(JSONdataToStream, "FrameStream", (response) => { });
 
-        Debug.Log("Sending image to Kinesis");
-        _C.PutRecord(JSONdataToStream, "FrameStream", (response) => { }); 
+                frameBytes = null;
+                JSONdataToStream = null;
+                isRunning = false;
 
+            }
+            yield return exportInterval;
+        }
     }
+
 
     public void activate(){
         sendToAWS = true;
+        co = StartCoroutine(ExportFrame());
     }
 
-    public void deactive(){
+
+    public void deactivate(){
         sendToAWS = false;
+        StopCoroutine(co);
+        Resources.UnloadUnusedAssets();
     }
 
 }

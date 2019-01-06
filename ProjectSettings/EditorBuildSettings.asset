@@ -20,4 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Scenes/Face2Face_V1.unity
     guid: ace174779dac745d58645758560cad9f
+  - enabled: 0
+    path: Assets/_Scenes/Transition.unity
+    guid: 5eb993e0db19c4129b1b20b81ad55ac7
   m_configObjects: {}
