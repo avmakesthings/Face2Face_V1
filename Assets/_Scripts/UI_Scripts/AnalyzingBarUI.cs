@@ -18,4 +18,8 @@ public class AnalyzingBarUI : MonoBehaviour {
             analyzeBar.fillAmount -= 1.0f / waitTime * Time.deltaTime;
         }
     }
+
+    //public IEnumerator analyzing(){
+    //    yield return new WaitForSeconds
+    //}
 }
