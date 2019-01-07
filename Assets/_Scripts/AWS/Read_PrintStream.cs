@@ -24,9 +24,10 @@ public class Read_PrintStream : MonoBehaviour {
 
 	// Use this for initialization
 	void Start() {
-        resetDataFields("");
+        resetDataFields("...");
         awsClient = this.GetComponent<AWSClient>();
         streamName = "AmazonRekognitionStreamOut";
+        StartCoroutine(ReadKinesisStream());
 	}
 
 	void HandleError(Exception e){
@@ -43,12 +44,14 @@ public class Read_PrintStream : MonoBehaviour {
             awsClient.ReadStream(streamName, (response)=>{
 				List<Amazon.Kinesis.Model.Record> records = response.Records;
 				foreach(Amazon.Kinesis.Model.Record awsRecord in records){
-                    if (stopPrinting)
-                    {
-                        return;
-                    }
+
 					try{
-						string recordString = Encoding.ASCII.GetString(awsRecord.Data.ToArray());
+                        if (stopPrinting)
+                        {
+                            return;
+                        }
+
+                        string recordString = Encoding.ASCII.GetString(awsRecord.Data.ToArray());
 						Rekog.Record record = Rekog.Record.Deserialize(recordString);
 
 						if(record.rekog_face_details.Count > 0){
@@ -121,14 +124,14 @@ public class Read_PrintStream : MonoBehaviour {
     {
         resetDataFields("");
         stopPrinting = false;
-        co = StartCoroutine(ReadKinesisStream());
+        //co = StartCoroutine(ReadKinesisStream());
     }
 
 
     public void deactivate()
     {
         stopPrinting = true;
-        StopCoroutine(co);
+        //StopCoroutine(co);
         resetDataFields("");
 
     }

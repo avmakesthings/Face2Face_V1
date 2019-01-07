@@ -110,7 +110,6 @@ public class WriteStream : MonoBehaviour
     public void deactivate(){
         sendToAWS = false;
         StopCoroutine(co);
-        Resources.UnloadUnusedAssets();
     }
 
 }
